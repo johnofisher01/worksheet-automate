@@ -54,15 +54,23 @@ function mapSheetRowToTemplateFields(row) {
     };
 }
 
+// Helper: replaces forbidden file name characters with '-'
+function safeFilename(str) {
+    return String(str).replace(/[\/\\?%*:|"<>]/g, '-');
+}
+
 function createDocx(data, i) {
     const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
     doc.render(data);
     fs.ensureDirSync(OUTPUT_DIR);
-    const safeName = data.JOB_NO || `row${i}`;
-    const safeDate = data.DATE || 'nodate';
+
+    // Use safe filenames!
+    const safeName = safeFilename(data.JOB_NO || `row${i}`);
+    const safeDate = safeFilename(data.DATE || 'nodate');
     const outputFile = path.join(OUTPUT_DIR, `worksheet_${safeName}_${safeDate}.docx`);
+
     const buf = doc.getZip().generate({ type: 'nodebuffer' });
     fs.writeFileSync(outputFile, buf);
     return outputFile;

@@ -1,0 +1,11 @@
+{
+  "name": "worksheet-automate",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^39.2.3"
+  }
+}
