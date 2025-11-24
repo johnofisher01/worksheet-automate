@@ -29,20 +29,11 @@ ipcMain.handle('generateWorksheets', async () => {
   });
 });
 
-// IPC for opening OneDrive Worksheets folder
+// IPC for opening the OneDrive Worksheets ONLINE web folder
 ipcMain.handle('openOneDriveFolder', async () => {
-  // TODO: Set the correct path for your system!
-  // WINDOWS EXAMPLE:
-  // const oneDriveFolder = 'C:\\Users\\YourName\\OneDrive\\Worksheets';
-  // MAC EXAMPLE:
-  // const oneDriveFolder = '/Users/YourName/OneDrive/Worksheets';
-
-  // ---- EDIT THIS FOR YOUR SYSTEM ----
-  const oneDriveFolder = '/Users/YOURNAME/OneDrive/Worksheets';
-  // ----                           ----
-
-  // Open the folder in file explorer
-  return shell.openPath(oneDriveFolder);
+  // Use your provided OneDrive web folder link below:
+  const oneDriveWebUrl = "https://onedrive.live.com/?id=%2Fpersonal%2F863da6a4189dcf94%2FDocuments%2FDocuments%2FStaff%20Day%20Sheets%2FWORKSHEET%2DOUTPUT&listurl=%2Fpersonal%2F863da6a4189dcf94%2FDocuments";
+  return shell.openExternal(oneDriveWebUrl);
 });
 
 app.whenReady().then(createWindow);

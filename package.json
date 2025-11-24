@@ -2,10 +2,31 @@
   "name": "worksheet-automate",
   "version": "1.0.0",
   "main": "main.js",
+  "description": "A professional worksheet generator by RJ Dorey",
+  "author": "RJ Dorey",
+  "license": "MIT",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "devDependencies": {
-    "electron": "^39.2.3"
+    "electron": "^39.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.rjdorey.worksheetgenerator",
+    "productName": "Worksheet Generator",
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server/**/*",
+      "client/build/**/*",
+      "server/electron-preload.js",
+      "package.json"
+    ]
   }
 }
