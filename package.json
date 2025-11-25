@@ -28,5 +28,12 @@
       "server/electron-preload.js",
       "package.json"
     ]
+  },
+  "dependencies": {
+    "docxtemplater": "^3.67.5",
+    "fs-extra": "^11.3.2",
+    "googleapis": "^166.0.0",
+    "minimist": "^1.2.8",
+    "pizzip": "^3.2.0"
   }
 }

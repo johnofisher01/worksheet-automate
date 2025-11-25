@@ -3,22 +3,28 @@ const path = require('path');
 const { google } = require('googleapis');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
-require('dotenv').config();
+const minimist = require('minimist');
 
+// Always load .env from the project root (../.env from server/)
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+const argv = minimist(process.argv.slice(2));
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-const CREDS_PATH = process.env.GOOGLE_CREDENTIALS_PATH || 'google-sheets-creds.json';
+const CREDS_PATH = process.env.GOOGLE_CREDENTIALS_PATH || path.join(__dirname, 'google-sheets-creds.json');
 const TEMPLATE_PATH = path.join(__dirname, 'templates', 'worksheet_template_10.docx');
-const OUTPUT_DIR = path.join(__dirname, 'output'); // or your preferred folder
-
+const OUTPUT_DIR = argv.output ? path.resolve(argv.output) : path.join(__dirname, 'output');
 const SHEET_RANGE = 'Form Responses 1';
 
-// Helper: replaces forbidden file name characters with '-'
 function safeFilename(str) {
     return String(str || '').replace(/[\/\\?%*:|"<>]/g, '-');
 }
 
 async function getRows() {
-    const creds = require(path.join(__dirname, CREDS_PATH));
+    if (!SHEET_ID) throw new Error('Missing GOOGLE_SHEET_ID in .env!');
+    if (!CREDS_PATH) throw new Error('Missing GOOGLE_CREDENTIALS_PATH in .env!');
+    if (!fs.existsSync(CREDS_PATH)) throw new Error(`Credentials file not found at: ${CREDS_PATH}`);
+
+    const creds = require(path.resolve(CREDS_PATH));
     const auth = new google.auth.GoogleAuth({
         credentials: creds,
         scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
@@ -38,7 +44,6 @@ async function getRows() {
 }
 
 function mapSheetRowToTemplateFields(row) {
-    // Adjust keys if your sheet headers differ!
     return {
         NAME: row['NAME'] || '',
         DATE: row['DATE'] || '',
@@ -59,22 +64,16 @@ function mapSheetRowToTemplateFields(row) {
 }
 
 function createDocx(data) {
+    if (!fs.existsSync(TEMPLATE_PATH)) throw new Error(`Template not found at: ${TEMPLATE_PATH}`);
+    fs.ensureDirSync(OUTPUT_DIR);
     const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
     doc.render(data);
-    fs.ensureDirSync(OUTPUT_DIR);
-
-    // Build: DATE-NAME-JOBNO.docx from row data
     const safeDate = safeFilename(data.DATE || 'nodate');
     const safeName = safeFilename(data.NAME || 'NONAME');
     const safeJobNumber = safeFilename(data.JOB_NO || 'NOJOBNO');
-
-    const outputFile = path.join(
-        OUTPUT_DIR,
-        `${safeDate}-${safeName}-${safeJobNumber}.docx`
-    );
-
+    const outputFile = path.join(OUTPUT_DIR, `${safeDate}-${safeName}-${safeJobNumber}.docx`);
     const buf = doc.getZip().generate({ type: 'nodebuffer' });
     fs.writeFileSync(outputFile, buf);
     return outputFile;
@@ -83,17 +82,20 @@ function createDocx(data) {
 (async () => {
     try {
         const rows = await getRows();
+        if (!rows.length) {
+            console.log('No rows in sheet!');
+            return;
+        }
         let generatedCount = 0;
-        rows.forEach((row, i) => {
+        for (const [i, row] of rows.entries()) {
             const tplData = mapSheetRowToTemplateFields(row);
             const out = createDocx(tplData);
             console.log('Generated for row', i + 1, ':', out);
             generatedCount++;
-        });
-        if (generatedCount === 0) {
-            console.log('No rows in sheet!');
         }
+        console.log(`\nSuccess! Total worksheets generated: ${generatedCount}`);
     } catch (err) {
-        console.error('Failed:', err);
+        console.error('\nFailed:', err.message);
+        process.exit(1);
     }
 })();

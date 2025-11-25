@@ -5,3 +5,5 @@ client/build/
 *.log
 .DS_Store
 dist/
+google-sheets-creds.json
+server/google-sheets-creds.json

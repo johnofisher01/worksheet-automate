@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
   const [error, setError] = useState('');
   const [output, setOutput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [outputFolder, setOutputFolder] = useState(() => localStorage.getItem('outputFolder') || '');
+
+  // If folder is chosen, keep it in localStorage
+  const handleChooseFolder = async () => {
+    if (window.electronAPI && window.electronAPI.chooseOutputFolder) {
+      const folder = await window.electronAPI.chooseOutputFolder();
+      if (folder) {
+        setOutputFolder(folder);
+        localStorage.setItem('outputFolder', folder);
+        setError('');
+      }
+    } else {
+      setError('Could not choose folder: Electron API not available!');
+    }
+  };
 
   const handleGenerate = async () => {
     setError('');
@@ -14,7 +29,10 @@ function App() {
       if (!window.electronAPI || !window.electronAPI.generateWorksheets) {
         throw new Error('Electron API not found. Are you running inside Electron?');
       }
-      const result = await window.electronAPI.generateWorksheets();
+      if (!outputFolder) {
+        throw new Error('Please select an output folder before generating.');
+      }
+      const result = await window.electronAPI.generateWorksheets(outputFolder);
       setOutput(result);
     } catch (err) {
       setError(err.message || 'Unknown error');
@@ -43,6 +61,17 @@ function App() {
           <h1 className="title">Worksheet Generator</h1>
         </div>
         <div className="byline">RJ Dorey Ltd</div>
+        {/* Choose output folder */}
+        <div style={{ margin: "16px 0" }}>
+          <button className="choose-folder-btn" onClick={handleChooseFolder}>
+            Choose Output Folder
+          </button>
+          {outputFolder && (
+            <span className="output-folder-label" style={{ marginLeft: 16 }}>
+              Saving to: <b>{outputFolder}</b>
+            </span>
+          )}
+        </div>
         <button className="generate-btn" onClick={handleGenerate} disabled={loading}>
           {loading ? "Generating..." : "Generate Worksheets"}
         </button>

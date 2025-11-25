@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  generateWorksheets: () => ipcRenderer.invoke('generateWorksheets'),
+  // Now pass folderPath as argument to generateWorksheets
+  generateWorksheets: (folderPath) => ipcRenderer.invoke('generateWorksheets', folderPath),
+  // Folder picker dialog
+  chooseOutputFolder: () => ipcRenderer.invoke('chooseOutputFolder'),
   openOneDriveFolder: () => ipcRenderer.invoke('openOneDriveFolder')
 });

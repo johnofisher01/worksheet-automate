@@ -1,14 +1,16 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// Always load .env at the root
+require('dotenv').config();
+
 function createWindow() {
   const win = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: 800,
+    height: 600,
     webPreferences: {
-      // Preload script path
-      preload: path.join(__dirname, 'server', 'electron-preload.js'),
+      preload: path.join(__dirname, 'server', 'electron-preload.js'), // NOW POINTS TO server/
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -16,32 +18,26 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'client', 'build', 'index.html'));
 }
 
-// IPC for generating worksheets
-ipcMain.handle('generateWorksheets', async () => {
-  const scriptPath = path.join(__dirname, 'server', 'fillFromSheet.js');
-  return new Promise((resolve, reject) => {
-    const child = spawn('node', [scriptPath], { cwd: path.dirname(scriptPath) });
+app.whenReady().then(createWindow);
+
+ipcMain.handle('chooseOutputFolder', async () => {
+  const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+  if (result.canceled || !result.filePaths[0]) return null;
+  return result.filePaths[0];
+});
+
+ipcMain.handle('generateWorksheets', async (event, outputFolder) => {
+  return new Promise((resolve) => {
+    const scriptPath = path.join(__dirname, 'server', 'fillFromSheet.js');
+    const child = spawn('node', [scriptPath, '--output', outputFolder], { stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
-    child.stdout.on('data', data => output += data.toString());
-    child.stderr.on('data', data => output += '\n' + data.toString());
-    child.on('close', code => resolve(output));
-    child.on('error', err => reject(err));
+    child.stdout.on('data', (data) => output += data.toString());
+    child.stderr.on('data', (data) => output += '\n' + data.toString());
+    child.on('close', () => resolve(output || 'Done!'));
+    child.on('error', (err) => resolve(`Error: ${err.message}`));
   });
 });
 
-// IPC for opening the OneDrive Worksheets ONLINE web folder
-ipcMain.handle('openOneDriveFolder', async () => {
-  // Use your provided OneDrive web folder link below:
-  const oneDriveWebUrl = "https://onedrive.live.com/?id=%2Fpersonal%2F863da6a4189dcf94%2FDocuments%2FDocuments%2FStaff%20Day%20Sheets%2FWORKSHEET%2DOUTPUT&listurl=%2Fpersonal%2F863da6a4189dcf94%2FDocuments";
-  return shell.openExternal(oneDriveWebUrl);
-});
-
-app.whenReady().then(createWindow);
-
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
