@@ -8,10 +8,14 @@ require('dotenv').config();
 const SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const CREDS_PATH = process.env.GOOGLE_CREDENTIALS_PATH || 'google-sheets-creds.json';
 const TEMPLATE_PATH = path.join(__dirname, 'templates', 'worksheet_template_10.docx');
-const OUTPUT_DIR = path.join(__dirname, 'output');
+const OUTPUT_DIR = path.join(__dirname, 'output'); // or your preferred folder
 
-// Update this range if your tab name or columns differ!
-const SHEET_RANGE = 'Form Responses 1'; // change if needed
+const SHEET_RANGE = 'Form Responses 1';
+
+// Helper: replaces forbidden file name characters with '-'
+function safeFilename(str) {
+    return String(str || '').replace(/[\/\\?%*:|"<>]/g, '-');
+}
 
 async function getRows() {
     const creds = require(path.join(__dirname, CREDS_PATH));
@@ -34,11 +38,11 @@ async function getRows() {
 }
 
 function mapSheetRowToTemplateFields(row) {
-    // Change these keys if your sheet headers are different!
+    // Adjust keys if your sheet headers differ!
     return {
         NAME: row['NAME'] || '',
         DATE: row['DATE'] || '',
-        JOB_NO: row['Job Number'] || '',
+        JOB_NO: row['Job Number'] || row['JOB NUMBER'] || '',
         CUSTOMER: row['Customer'] || '',
         ADDRESS: row['Address'] || '',
         WORKS_CARRIED_OUT: row['WORKS CARRIED OUT'] || '',
@@ -54,22 +58,22 @@ function mapSheetRowToTemplateFields(row) {
     };
 }
 
-// Helper: replaces forbidden file name characters with '-'
-function safeFilename(str) {
-    return String(str).replace(/[\/\\?%*:|"<>]/g, '-');
-}
-
-function createDocx(data, i) {
+function createDocx(data) {
     const content = fs.readFileSync(TEMPLATE_PATH, 'binary');
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
     doc.render(data);
     fs.ensureDirSync(OUTPUT_DIR);
 
-    // Use safe filenames!
-    const safeName = safeFilename(data.JOB_NO || `row${i}`);
+    // Build: DATE-NAME-JOBNO.docx from row data
     const safeDate = safeFilename(data.DATE || 'nodate');
-    const outputFile = path.join(OUTPUT_DIR, `worksheet_${safeName}_${safeDate}.docx`);
+    const safeName = safeFilename(data.NAME || 'NONAME');
+    const safeJobNumber = safeFilename(data.JOB_NO || 'NOJOBNO');
+
+    const outputFile = path.join(
+        OUTPUT_DIR,
+        `${safeDate}-${safeName}-${safeJobNumber}.docx`
+    );
 
     const buf = doc.getZip().generate({ type: 'nodebuffer' });
     fs.writeFileSync(outputFile, buf);
@@ -79,11 +83,16 @@ function createDocx(data, i) {
 (async () => {
     try {
         const rows = await getRows();
+        let generatedCount = 0;
         rows.forEach((row, i) => {
             const tplData = mapSheetRowToTemplateFields(row);
-            const out = createDocx(tplData, i);
+            const out = createDocx(tplData);
             console.log('Generated for row', i + 1, ':', out);
+            generatedCount++;
         });
+        if (generatedCount === 0) {
+            console.log('No rows in sheet!');
+        }
     } catch (err) {
         console.error('Failed:', err);
     }

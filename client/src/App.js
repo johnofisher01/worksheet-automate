@@ -42,7 +42,7 @@ function App() {
           />
           <h1 className="title">Worksheet Generator</h1>
         </div>
-        <div className="byline">by RJ Dorey</div>
+        <div className="byline">RJ Dorey Ltd</div>
         <button className="generate-btn" onClick={handleGenerate} disabled={loading}>
           {loading ? "Generating..." : "Generate Worksheets"}
         </button>
