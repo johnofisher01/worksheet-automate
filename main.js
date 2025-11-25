@@ -29,7 +29,8 @@ ipcMain.handle('chooseOutputFolder', async () => {
 ipcMain.handle('generateWorksheets', async (event, outputFolder) => {
   return new Promise((resolve) => {
     const scriptPath = path.join(__dirname, 'server', 'fillFromSheet.js');
-    const child = spawn('node', [scriptPath, '--output', outputFolder], { stdio: ['ignore', 'pipe', 'pipe'] });
+    // The important fix: use process.execPath instead of 'node'
+    const child = spawn(process.execPath, [scriptPath, '--output', outputFolder], { stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     child.stdout.on('data', (data) => output += data.toString());
     child.stderr.on('data', (data) => output += '\n' + data.toString());
