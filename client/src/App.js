@@ -121,15 +121,7 @@ function App() {
               onChange={e => setPwInput(e.target.value)}
               style={{ marginRight: 6 }}
             />
-            <button
-              type="button"
-              className="pw-toggle"
-              tabIndex={-1}
-              aria-label={pwShow ? "Hide password" : "Show password"}
-              onClick={() => setPwShow(s => !s)}
-            >
-              {pwShow ? "🙈" : "👁️"}
-            </button>
+           
           </div>
           {authError && <div className="login-error">{authError}</div>}
           <button className="login-submit" type="submit">

@@ -78,38 +78,54 @@
   font-size: 1.05rem;
   letter-spacing: 0.02em;
 }
+
+/* make inputs fill the available form width and include padding/border in the width calculation */
 .login-input {
+  width: 100%;
+  box-sizing: border-box;
   border: 1.2px solid #bdd;
   border-radius: 11px;
   font-size: 1.11em;
   background: #fafaf7;
   padding: 11px 18px;
   margin-bottom: 13px;
-  width: 218px;
   transition: border 0.15s;
 }
 .login-input:focus {
   border: 1.5px solid #28485a;
   outline: none;
 }
+
+/* password row: input + toggle aligned in the same row */
 .pw-row {
   display: flex;
   align-items: center;
-  width: 225px;
+  width: 100%;
+  gap: 8px;
+  margin-bottom: 13px;
+  box-sizing: border-box;
 }
+
+/* style the toggle so it visually matches the input height and borders */
 .pw-toggle {
-  background: none;
-  border: none;
-  font-size: 1.2em;
+  background: #fafaf7;
+  border: 1.2px solid #bdd;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 10px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
   cursor: pointer;
-  opacity: 0.77;
-  margin-left: -3px;
-  transition: filter 0.13s;
+  opacity: 0.9;
 }
 .pw-toggle:focus {
-  filter: brightness(1.2);
+  filter: brightness(1.1);
   outline: none;
 }
+
 .login-error {
   margin-bottom: 0.7rem;
   color: #be2230;

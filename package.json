@@ -40,7 +40,7 @@
       "perMachine": false,
       "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": "true"
+      "createDesktopShortcut": true
     }
   },
   "dependencies": {

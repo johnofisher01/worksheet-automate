@@ -4,6 +4,6 @@ client/build/
 .env
 *.log
 .DS_Store
-dist/
+dist-out/
 google-sheets-creds.json
 server/google-sheets-creds.json
